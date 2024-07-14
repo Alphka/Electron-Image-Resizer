@@ -1,10 +1,8 @@
 import { app, BrowserWindow, Menu } from "electron"
 import { join } from "path"
 
-const isDevelopment = process.env.NODE_ENV !== "production"
 const isMac = process.platform === "darwin"
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if(require("electron-squirrel-startup")){
 	app.quit()
 }
@@ -12,28 +10,27 @@ if(require("electron-squirrel-startup")){
 function createMainWindow(){
 	const mainWindow = new BrowserWindow({
 		title: "Image Resizer",
-		width: isDevelopment ? 1000 : 500,
-		height: 600,
+		width: 1300,
+		height: 800,
 		webPreferences: {
-			preload: join(__dirname, "preload.js")
+			preload: join(__dirname, "preload.js"),
+			nodeIntegration: true
 		}
 	})
 
-	if(isDevelopment){
-		mainWindow.webContents.openDevTools()
-	}
-
-	// mainWindow.loadFile(join(__dirname, "renderer/index.html"))
-
 	if(MAIN_WINDOW_VITE_DEV_SERVER_URL){
-		mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
+		mainWindow.webContents.openDevTools()
+		mainWindow.loadURL(new URL("/#/home", MAIN_WINDOW_VITE_DEV_SERVER_URL).href)
 	}else{
-		mainWindow.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`))
+		mainWindow.setSize(500, mainWindow.getSize()[1])
+		mainWindow.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`), { hash: "home" })
 	}
+
+	return mainWindow
 }
 
 app.whenReady().then(() => {
-	createMainWindow()
+	const mainWindow = createMainWindow()
 
 	Menu.setApplicationMenu(Menu.buildFromTemplate([
 		{
@@ -43,6 +40,31 @@ app.whenReady().then(() => {
 					label: "Quit",
 					click: app.quit,
 					accelerator: "CtrlOrCtrl+W"
+				}
+			]
+		},
+		{
+			label: "Help",
+			submenu: [
+				{
+					label: "About",
+					click: () => {
+						const aboutWindow = new BrowserWindow({
+							title: "About Image Resizer",
+							width: 300,
+							height: 300,
+							modal: true,
+							parent: mainWindow,
+							minimizable: false,
+							autoHideMenuBar: true
+						})
+
+						if(MAIN_WINDOW_VITE_DEV_SERVER_URL){
+							aboutWindow.loadURL(new URL("/#/about", MAIN_WINDOW_VITE_DEV_SERVER_URL).href)
+						}else{
+							aboutWindow.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`), { hash: "about" })
+						}
+					}
 				}
 			]
 		}
