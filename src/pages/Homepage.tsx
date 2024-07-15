@@ -1,17 +1,64 @@
-import { useState } from "react"
+import type { FormEventHandler } from "react"
+import { useCallback, useRef, useState } from "react"
 import { twMerge } from "tailwind-merge"
 import { toast } from "react-toastify"
 import logo from "./images/logo.svg"
 
-declare var os: typeof import("os")
+declare var ipcRenderer: typeof import("electron").ipcRenderer
 declare var path: typeof import("path")
+declare var os: typeof import("os")
+
+export interface ImageResizeEventData {
+	path: string
+	width: number
+	height: number
+}
 
 export default function MainPage(){
-	const [filename, setFilename] = useState<string | null>(null)
+	const [file, setFile] = useState<File | null>(null)
 	const [outputPath, setOutputPath] = useState<string | null>(null)
 	const [inputWidth, setInputWidth] = useState<number | undefined>(undefined)
 	const [inputHeight, setInputHeight] = useState<number | undefined>(undefined)
 	const [isFormHidden, setIsFormHidden] = useState(true)
+	const imageWidth = useRef(0)
+	const imageHeight = useRef(0)
+
+	const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(event => {
+		event.preventDefault()
+
+		if(!file) return toast.error("Please upload an image")
+
+		let errored = false
+		const width = imageWidth.current
+		const height = imageHeight.current
+
+		if(!width) errored = true, toast.error("Invalid image width")
+		if(!height) errored = true, toast.error("Invalid image height")
+
+		if(errored) return
+
+		const { path } = file
+
+		ipcRenderer.send("image:resize", {
+			path,
+			width,
+			height
+		})
+
+		function handleSuccess(){
+			toast.success("Image resized successfully", { autoClose: 5e3 })
+			ipcRenderer.removeListener("image:error", handleError)
+		}
+
+		function handleError(error: any){
+			console.error(error)
+			toast.error("Something went wrong")
+			ipcRenderer.removeListener("image:done", handleSuccess)
+		}
+
+		ipcRenderer.once("image:done", handleSuccess)
+		ipcRenderer.once("image:error", handleError)
+	}, [file])
 
 	return (
 		<main className="bg-emerald-800">
@@ -20,14 +67,14 @@ export default function MainPage(){
 					<input
 						id="input-file"
 						type="file"
-						accept=".gif,.png,.jpg,.jpeg,.jfif,.jfi"
+						accept="image/*"
 						className="hidden"
 						onChange={event => {
 							const file = event.currentTarget.files!.item(0)
 
 							if(!file){
 								toast.error("Please select an image")
-								setFilename(null)
+								setFile(null)
 								setOutputPath(null)
 								setIsFormHidden(true)
 								return
@@ -38,14 +85,18 @@ export default function MainPage(){
 							image.src = URL.createObjectURL(file)
 
 							image.onload = () => {
-								setInputWidth(image.width || undefined)
-								setInputHeight(image.height || undefined)
+								const { width, height } = image
+								imageWidth.current = width
+								imageHeight.current = height
+								setInputWidth(width || undefined)
+								setInputHeight(height || undefined)
 							}
 
-							setFilename(file.name)
+							setFile(file)
 							setOutputPath(path.join(os.tmpdir(), "image-resizer").replaceAll("\\", "/"))
 							setIsFormHidden(false)
 						}}
+						required
 					/>
 
 					<label
@@ -57,16 +108,24 @@ export default function MainPage(){
 					</label>
 				</div>
 
-				<form className={twMerge(
-					"flex flex-col gap-4",
-					isFormHidden && "hidden"
-				)}>
+				<form
+					className={twMerge(
+						"flex flex-col gap-4",
+						isFormHidden && "hidden"
+					)}
+					onSubmit={handleSubmit}
+				>
 					<div className="flex flex-col gap-1">
 						<label className="block text-white text-center w-80 m-auto py-3 shadow-sm border-gray-300 rounded-md" htmlFor="width">Width</label>
 						<input
 							type="number"
 							name="width"
 							className="block w-80 m-auto p-3 shadow-sm border-gray-300 rounded-md"
+							onChange={event => {
+								const { value } = event.currentTarget
+								const width = Number(value)
+								imageWidth.current = Number.isFinite(width) && !Number.isNaN(width) ? width : 0
+							}}
 							defaultValue={inputWidth}
 						/>
 					</div>
@@ -77,6 +136,11 @@ export default function MainPage(){
 							type="number"
 							name="height"
 							className="block w-80 m-auto p-3 shadow-sm border-gray-300 rounded-md"
+							onChange={event => {
+								const { value } = event.currentTarget
+								const height = Number(value)
+								imageHeight.current = Number.isFinite(height) && !Number.isNaN(height) ? height : 0
+							}}
 							defaultValue={inputHeight}
 						/>
 					</div>
@@ -92,7 +156,7 @@ export default function MainPage(){
 				<div className="flex flex-col gap-2 text-white text-lg text-center font-mono">
 					<p>
 						<strong>File: </strong>
-						<span>{filename}</span>
+						<span>{file?.name}</span>
 					</p>
 					<p>
 						<strong>Output: </strong>

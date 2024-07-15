@@ -1,5 +1,10 @@
-import { app, BrowserWindow, Menu } from "electron"
-import { join } from "path"
+import type { ImageResizeEventData } from "./pages/Homepage"
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron"
+import { mkdir, readFile, writeFile } from "fs/promises"
+import { join, parse } from "path"
+import { existsSync } from "fs"
+import { tmpdir } from "os"
+import sharp from "sharp"
 
 const isMac = process.platform === "darwin"
 
@@ -73,6 +78,32 @@ app.whenReady().then(() => {
 	app.on("activate", () => {
 		if(!BrowserWindow.getAllWindows().length){
 			createMainWindow()
+		}
+	})
+
+	ipcMain.on("image:resize", async (event, { path, width, height }: ImageResizeEventData) => {
+		try{
+			const resizedFilebuffer = await sharp(await readFile(path))
+				.keepExif()
+				.keepMetadata()
+				.resize(width, height)
+				.toBuffer()
+
+			const outputFolder = join(tmpdir(), "image-resizer")
+			if(!existsSync(outputFolder)) await mkdir(outputFolder, { recursive: true })
+
+			const { name, ext } = parse(path)
+			let outputPath = join(outputFolder, name + ext)
+			for(let i = 1; existsSync(outputPath); i++) outputPath = join(outputFolder, `${name} (${i})${ext}`)
+
+			await writeFile(outputPath, resizedFilebuffer)
+
+			mainWindow.webContents.send("image:done")
+
+			await shell.openPath(outputPath)
+		}catch(error){
+			mainWindow.webContents.send("image:error", error)
+			console.error(error)
 		}
 	})
 })
