@@ -75,12 +75,6 @@ app.whenReady().then(() => {
 		}
 	]))
 
-	app.on("activate", () => {
-		if(!BrowserWindow.getAllWindows().length){
-			createMainWindow()
-		}
-	})
-
 	ipcMain.on("image:resize", async (event, { path, width, height }: ImageResizeEventData) => {
 		try{
 			const resizedFilebuffer = await sharp(await readFile(path))

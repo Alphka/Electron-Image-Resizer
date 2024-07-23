@@ -1,11 +1,17 @@
 import type { ConfigEnv, Plugin, UserConfig } from "vite"
-import type { AddressInfo } from "node:net"
-import { builtinModules } from "node:module"
+import type { AddressInfo } from "net"
+import { builtinModules } from "module"
 import packageData from "./package.json"
 
-export const builtins = ["electron", ...builtinModules.map(e => [e, `node:${e}`]).flat()]
+export const builtins = [
+	"electron",
+	...builtinModules.map(e => [e, `node:${e}`]).flat()
+]
 
-export const external = [...builtins, ...Object.keys("dependencies" in packageData ? (packageData.dependencies as Record<string, unknown>) : {})]
+export const external = [
+	...builtins,
+	...Object.keys("dependencies" in packageData ? (packageData.dependencies as Record<string, unknown>) : {})
+]
 
 export function getBuildConfig(env: ConfigEnv<"build">): UserConfig {
 	const { root, mode, command } = env
