@@ -9,7 +9,14 @@ import { MakerRpm } from "@electron-forge/maker-rpm"
 
 const config: ForgeConfig = {
 	packagerConfig: {
-		asar: true
+		asar: {
+			// Native .node files and their DLLs cannot be read from inside app.asar.
+			unpack: "**/node_modules/@img/**"
+		},
+		// Keep node_modules so packager can copy the runtime dependencies (and sharp's
+		// platform package, an optionalDependency, when installed). The Vite plugin's
+		// default filter drops node_modules.
+		ignore: (file: string) => Boolean(file) && !/^\/(\.vite(\/|$)|node_modules(\/|$)|package\.json$)/.test(file)
 	},
 	rebuildConfig: {},
 	makers: [

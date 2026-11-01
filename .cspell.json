@@ -1,0 +1,26 @@
+{
+	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+	"version": "0.2",
+	"language": "en",
+	"words": [
+		"asar",
+		"distributables",
+		"EXIF",
+		"jsnext",
+		"minimizable",
+		"resizer",
+		"Souza",
+		"Toastify",
+		"vite"
+	],
+	"ignorePaths": [
+		"node_modules/**",
+		".vscode/**",
+		".vite/**",
+		"out/**",
+		".git/**",
+		".gitignore",
+		"package-lock.json",
+		"*.svg"
+	]
+}
