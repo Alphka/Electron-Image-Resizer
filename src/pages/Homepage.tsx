@@ -2,17 +2,9 @@ import type { FormEventHandler } from "react"
 import { useCallback, useRef, useState } from "react"
 import { twMerge } from "tailwind-merge"
 import { toast } from "react-toastify"
+import { IMAGE_EXTENSIONS } from "../shared"
+import isValidDimension from "../helpers/isValidDimension"
 import logo from "./images/logo.svg"
-
-declare var ipcRenderer: typeof import("electron").ipcRenderer
-declare var path: typeof import("path")
-declare var os: typeof import("os")
-
-export interface ImageResizeEventData {
-	path: string
-	width: number
-	height: number
-}
 
 export default function MainPage(){
 	const [file, setFile] = useState<File | null>(null)
@@ -23,7 +15,7 @@ export default function MainPage(){
 	const imageWidth = useRef(0)
 	const imageHeight = useRef(0)
 
-	const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(event => {
+	const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(async event => {
 		event.preventDefault()
 
 		if(!file) return toast.error("Please upload an image")
@@ -32,32 +24,22 @@ export default function MainPage(){
 		const width = imageWidth.current
 		const height = imageHeight.current
 
-		if(!width) errored = true, toast.error("Invalid image width")
-		if(!height) errored = true, toast.error("Invalid image height")
+		if(!isValidDimension(width)) errored = true, toast.error("Invalid image width")
+		if(!isValidDimension(height)) errored = true, toast.error("Invalid image height")
 
 		if(errored) return
 
-		const { path } = file
+		const path = window.imageResizer.getFilePath(file)
 
-		ipcRenderer.send("image:resize", {
-			path,
-			width,
-			height
-		})
+		if(!path) return toast.error("Could not read the image path")
 
-		function handleSuccess(){
+		try{
+			await window.imageResizer.resize({ path, width, height })
 			toast.success("Image resized successfully", { autoClose: 5e3 })
-			ipcRenderer.removeListener("image:error", handleError)
-		}
-
-		function handleError(error: any){
+		}catch(error){
 			console.error(error)
 			toast.error("Something went wrong")
-			ipcRenderer.removeListener("image:done", handleSuccess)
 		}
-
-		ipcRenderer.once("image:done", handleSuccess)
-		ipcRenderer.once("image:error", handleError)
 	}, [file])
 
 	return (
@@ -67,7 +49,7 @@ export default function MainPage(){
 					<input
 						id="input-file"
 						type="file"
-						accept="image/*"
+						accept={IMAGE_EXTENSIONS.join(",")}
 						className="hidden"
 						onChange={event => {
 							const file = event.currentTarget.files!.item(0)
@@ -85,6 +67,7 @@ export default function MainPage(){
 							image.src = URL.createObjectURL(file)
 
 							image.onload = () => {
+								URL.revokeObjectURL(image.src)
 								const { width, height } = image
 								imageWidth.current = width
 								imageHeight.current = height
@@ -93,7 +76,7 @@ export default function MainPage(){
 							}
 
 							setFile(file)
-							setOutputPath(path.join(os.tmpdir(), "image-resizer").replaceAll("\\", "/"))
+							window.imageResizer.getOutputDir().then(dir => setOutputPath(dir.replaceAll("\\", "/")))
 							setIsFormHidden(false)
 						}}
 						required

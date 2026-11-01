@@ -1,18 +1,11 @@
-import { contextBridge, ipcRenderer } from "electron"
-import path from "path"
-import os from "os"
+import type { ImageResizerApi } from "./shared"
+import { contextBridge, ipcRenderer, webUtils } from "electron"
+import { OUTPUT_DIR_CHANNEL, RESIZE_CHANNEL } from "./shared"
 
-contextBridge.exposeInMainWorld("os", {
-	tmpdir: os.tmpdir
-})
+const api: ImageResizerApi = {
+	getFilePath: file => webUtils.getPathForFile(file),
+	getOutputDir: () => ipcRenderer.invoke(OUTPUT_DIR_CHANNEL),
+	resize: ({ path, width, height }) => ipcRenderer.invoke(RESIZE_CHANNEL, { path, width, height })
+}
 
-contextBridge.exposeInMainWorld("path", {
-	join: path.join
-})
-
-contextBridge.exposeInMainWorld("ipcRenderer", {
-	removeListener: ipcRenderer.removeListener,
-	send: ipcRenderer.send,
-	once: ipcRenderer.once,
-	on: ipcRenderer.on
-})
+contextBridge.exposeInMainWorld("imageResizer", api)

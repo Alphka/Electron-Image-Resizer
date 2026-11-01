@@ -1,12 +1,15 @@
-import type { ImageResizeEventData } from "./pages/Homepage"
+import type { IpcMainInvokeEvent } from "electron"
 import { app, BrowserWindow, ipcMain, Menu, shell } from "electron"
-import { mkdir, readFile, writeFile } from "fs/promises"
-import { join, parse } from "path"
+import { mkdir, readFile, stat, writeFile } from "fs/promises"
+import { extname, isAbsolute, join, parse } from "path"
 import { existsSync } from "fs"
 import { tmpdir } from "os"
 import sharp from "sharp"
+import { IMAGE_EXTENSIONS, MAX_FILE_SIZE, OUTPUT_DIR_CHANNEL, RESIZE_CHANNEL } from "./shared"
+import isValidDimension from "./helpers/isValidDimension"
 
 const isMac = process.platform === "darwin"
+const outputFolder = join(tmpdir(), "image-resizer")
 
 if(require("electron-squirrel-startup")){
 	app.quit()
@@ -19,9 +22,13 @@ function createMainWindow(){
 		height: 800,
 		webPreferences: {
 			preload: join(__dirname, "preload.js"),
-			nodeIntegration: true
+			contextIsolation: true,
+			nodeIntegration: false,
+			sandbox: true
 		}
 	})
+
+	mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }))
 
 	if(MAIN_WINDOW_VITE_DEV_SERVER_URL){
 		mainWindow.webContents.openDevTools()
@@ -34,6 +41,16 @@ function createMainWindow(){
 	return mainWindow
 }
 
+async function validateInputPath(path: unknown){
+	// "\\" prefix: UNC paths would make Windows contact a remote host
+	if(typeof path !== "string" || !isAbsolute(path) || path.startsWith("\\\\")) throw new Error("Invalid image path")
+	if(!(IMAGE_EXTENSIONS as readonly string[]).includes(extname(path).toLowerCase())) throw new Error("Unsupported image type")
+
+	const stats = await stat(path)
+	if(!stats.isFile()) throw new Error("Invalid image path")
+	if(stats.size > MAX_FILE_SIZE) throw new Error("Image file is too large")
+}
+
 app.whenReady().then(() => {
 	const mainWindow = createMainWindow()
 
@@ -44,7 +61,7 @@ app.whenReady().then(() => {
 				{
 					label: "Quit",
 					click: app.quit,
-					accelerator: "CtrlOrCtrl+W"
+					accelerator: "CmdOrCtrl+W"
 				}
 			]
 		},
@@ -75,29 +92,42 @@ app.whenReady().then(() => {
 		}
 	]))
 
-	ipcMain.on("image:resize", async (event, { path, width, height }: ImageResizeEventData) => {
+	function isTrustedSender(event: IpcMainInvokeEvent){
+		return event.sender === mainWindow.webContents
+	}
+
+	ipcMain.handle(OUTPUT_DIR_CHANNEL, event => {
+		if(!isTrustedSender(event)) throw new Error("Untrusted sender")
+		return outputFolder
+	})
+
+	ipcMain.handle(RESIZE_CHANNEL, async (event, data: unknown) => {
+		if(!isTrustedSender(event)) throw new Error("Untrusted sender")
+
+		const { path, width, height } = (data ?? {}) as Record<string, unknown>
+
+		if(!isValidDimension(width) || !isValidDimension(height)) throw new Error("Invalid image dimensions")
+		await validateInputPath(path)
+
 		try{
-			const resizedFilebuffer = await sharp(await readFile(path))
+			const inputPath = path as string
+			const resizedFilebuffer = await sharp(await readFile(inputPath))
 				.keepExif()
 				.keepMetadata()
-				.resize(width, height)
+				.resize(width, height, { fit: "inside" })
 				.toBuffer()
 
-			const outputFolder = join(tmpdir(), "image-resizer")
 			if(!existsSync(outputFolder)) await mkdir(outputFolder, { recursive: true })
 
-			const { name, ext } = parse(path)
+			const { name, ext } = parse(inputPath)
 			let outputPath = join(outputFolder, name + ext)
 			for(let i = 1; existsSync(outputPath); i++) outputPath = join(outputFolder, `${name} (${i})${ext}`)
 
 			await writeFile(outputPath, resizedFilebuffer)
-
-			mainWindow.webContents.send("image:done")
-
 			await shell.openPath(outputPath)
 		}catch(error){
-			mainWindow.webContents.send("image:error", error)
 			console.error(error)
+			throw new Error("Failed to resize the image")
 		}
 	})
 })
