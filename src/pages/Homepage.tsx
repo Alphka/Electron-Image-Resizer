@@ -1,21 +1,21 @@
-import type { FormEventHandler } from "react"
+import type { FormEvent } from "react"
 import { useCallback, useRef, useState } from "react"
+import { IMAGE_EXTENSIONS } from "../shared"
 import { twMerge } from "tailwind-merge"
 import { toast } from "react-toastify"
-import { IMAGE_EXTENSIONS } from "../shared"
 import isValidDimension from "../helpers/isValidDimension"
 import logo from "./images/logo.svg"
 
 export default function MainPage(){
-	const [file, setFile] = useState<File | null>(null)
-	const [outputPath, setOutputPath] = useState<string | null>(null)
-	const [inputWidth, setInputWidth] = useState<number | undefined>(undefined)
-	const [inputHeight, setInputHeight] = useState<number | undefined>(undefined)
 	const [isFormHidden, setIsFormHidden] = useState(true)
-	const imageWidth = useRef(0)
+	const [inputHeight, setInputHeight] = useState<number | undefined>(undefined)
+	const [inputWidth, setInputWidth] = useState<number | undefined>(undefined)
+	const [outputPath, setOutputPath] = useState<string | null>(null)
+	const [file, setFile] = useState<File | null>(null)
 	const imageHeight = useRef(0)
+	const imageWidth = useRef(0)
 
-	const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(async event => {
+	const handleSubmit = useCallback(async (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault()
 
 		if(!file) return toast.error("Please upload an image")
@@ -24,8 +24,15 @@ export default function MainPage(){
 		const width = imageWidth.current
 		const height = imageHeight.current
 
-		if(!isValidDimension(width)) errored = true, toast.error("Invalid image width")
-		if(!isValidDimension(height)) errored = true, toast.error("Invalid image height")
+		if(!isValidDimension(width)){
+			errored = true
+			toast.error("Invalid image width")
+		}
+
+		if(!isValidDimension(height)){
+			errored = true
+			toast.error("Invalid image height")
+		}
 
 		if(errored) return
 
@@ -44,14 +51,14 @@ export default function MainPage(){
 
 	return (
 		<main className="bg-emerald-800">
-			<div className="flex flex-col align-center justify-center gap-6 max-w-xl mx-auto min-h-screen">
-				<div className="flex flex-col w-full items-center justify-center bg-grey-lighter">
+			<div className="flex flex-col justify-center gap-6 max-w-xl mx-auto min-h-screen">
+				<div className="flex flex-col w-full items-center justify-center">
 					<input
 						id="input-file"
 						type="file"
 						accept={IMAGE_EXTENSIONS.join(",")}
 						className="hidden"
-						onChange={event => {
+						onChange={(event) => {
 							const file = event.currentTarget.files!.item(0)
 
 							if(!file){
@@ -66,17 +73,17 @@ export default function MainPage(){
 
 							image.src = URL.createObjectURL(file)
 
-							image.onload = () => {
+							image.addEventListener("load", () => {
 								URL.revokeObjectURL(image.src)
 								const { width, height } = image
 								imageWidth.current = width
 								imageHeight.current = height
 								setInputWidth(width || undefined)
 								setInputHeight(height || undefined)
-							}
+							})
 
 							setFile(file)
-							window.imageResizer.getOutputDir().then(dir => setOutputPath(dir.replaceAll("\\", "/")))
+							window.imageResizer.getOutputDir().then((dir) => setOutputPath(dir.replaceAll("\\", "/")))
 							setIsFormHidden(false)
 						}}
 						required
@@ -84,9 +91,9 @@ export default function MainPage(){
 
 					<label
 						htmlFor="input-file"
-						className="bg-white flex flex-col items-center px-4 py-7 gap-2 w-64 text-gray-500 rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:text-teal-800"
+						className="bg-white flex flex-col items-center px-4 py-7 gap-2 w-64 text-gray-500 rounded-lg shadow-lg tracking-wide uppercase border cursor-pointer hover:text-teal-800"
 					>
-						<img className="w-8" src={logo} />
+						<img className="w-8" src={logo} alt="" />
 						<span className="leading-normal">Select an image to resize</span>
 					</label>
 				</div>
@@ -96,7 +103,7 @@ export default function MainPage(){
 						"flex flex-col gap-4",
 						isFormHidden && "hidden"
 					)}
-					onSubmit={handleSubmit}
+					onSubmit={(event) => void handleSubmit(event)}
 				>
 					<div className="flex flex-col gap-1">
 						<label className="block text-white text-center w-80 m-auto py-3 shadow-sm border-gray-300 rounded-md" htmlFor="width">Width</label>
@@ -104,7 +111,7 @@ export default function MainPage(){
 							type="number"
 							name="width"
 							className="block w-80 m-auto p-3 shadow-sm border-gray-300 rounded-md"
-							onChange={event => {
+							onChange={(event) => {
 								const { value } = event.currentTarget
 								const width = Number(value)
 								imageWidth.current = Number.isFinite(width) && !Number.isNaN(width) ? width : 0
@@ -119,7 +126,7 @@ export default function MainPage(){
 							type="number"
 							name="height"
 							className="block w-80 m-auto p-3 shadow-sm border-gray-300 rounded-md"
-							onChange={event => {
+							onChange={(event) => {
 								const { value } = event.currentTarget
 								const height = Number(value)
 								imageHeight.current = Number.isFinite(height) && !Number.isNaN(height) ? height : 0

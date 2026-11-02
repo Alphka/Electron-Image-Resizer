@@ -1,8 +1,7 @@
-import { HashRouter, Routes, Route } from "react-router-dom"
+import { HashRouter, Route, Routes } from "react-router-dom"
 import { ToastContainer } from "react-toastify"
 import AboutPage from "./pages/About"
 import Homepage from "./pages/Homepage"
-
 import "./main.css"
 import "react-toastify/dist/ReactToastify.min.css"
 

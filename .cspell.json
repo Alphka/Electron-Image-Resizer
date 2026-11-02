@@ -3,15 +3,25 @@
 	"version": "0.2",
 	"language": "en",
 	"words": [
+		"alphka",
 		"asar",
+		"claude",
+		"csstree",
 		"distributables",
 		"EXIF",
+		"isnan",
 		"jsnext",
 		"minimizable",
+		"multilines",
+		"nonconstructor",
+		"nonoctal",
+		"nonwords",
 		"resizer",
 		"Souza",
+		"textnodes",
 		"Toastify",
-		"vite"
+		"vite",
+		"yoda"
 	],
 	"ignorePaths": [
 		"node_modules/**",

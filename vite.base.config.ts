@@ -1,19 +1,19 @@
 import type { ConfigEnv, Plugin, UserConfig } from "vite"
-import type { AddressInfo } from "net"
-import { builtinModules } from "module"
+import type { AddressInfo } from "node:net"
+import { builtinModules } from "node:module"
 import packageData from "./package.json"
 
 export const builtins = [
 	"electron",
-	...builtinModules.map(e => [e, `node:${e}`]).flat()
+	...builtinModules.flatMap((e) => [e, `node:${e}`])
 ]
 
 export const external = [
 	...builtins,
-	...Object.keys("dependencies" in packageData ? (packageData.dependencies as Record<string, unknown>) : {})
+	...Object.keys("dependencies" in packageData ? (packageData.dependencies) : {})
 ]
 
-export function getBuildConfig(env: ConfigEnv<"build">): UserConfig {
+export function getBuildConfig(env: ConfigEnv<"build">): UserConfig{
 	const { root, mode, command } = env
 
 	return {
@@ -43,12 +43,12 @@ export function getDefineKeys(names: string[]){
 	}, define)
 }
 
-export function getBuildDefine(env: ConfigEnv<"build">) {
+export function getBuildDefine(env: ConfigEnv<"build">){
 	const { command, forgeConfig } = env
-	const names = forgeConfig.renderer.filter(({ name }) => name != null).map(({ name }) => name!)
+	const names = forgeConfig.renderer.filter(({ name }) => name != null).map(({ name }) => name)
 	const defineKeys = getDefineKeys(names)
 
-	const define = Object.entries(defineKeys).reduce(
+	return Object.entries(defineKeys).reduce<Record<string, any>>(
 		(acc, [name, keys]) => {
 			const { VITE_DEV_SERVER_URL, VITE_NAME } = keys
 			const def = {
@@ -57,18 +57,16 @@ export function getBuildDefine(env: ConfigEnv<"build">) {
 			}
 			return { ...acc, ...def }
 		},
-		{} as Record<string, any>
+		{}
 	)
-
-	return define
 }
 
-export function pluginExposeRenderer(name: string): Plugin {
+export function pluginExposeRenderer(name: string): Plugin{
 	const { VITE_DEV_SERVER_URL } = getDefineKeys([name])[name]
 
 	return {
 		name: "@electron-forge/plugin-vite:expose-renderer",
-		configureServer(server) {
+		configureServer(server){
 			process.viteDevServers ??= {}
 			process.viteDevServers[name] = server
 
@@ -80,13 +78,15 @@ export function pluginExposeRenderer(name: string): Plugin {
 	}
 }
 
-export function pluginHotRestart(command: "reload" | "restart"): Plugin {
+export function pluginHotRestart(command: "reload" | "restart"): Plugin{
 	return {
 		name: "@electron-forge/plugin-vite:hot-restart",
 		closeBundle(){
 			if(command === "reload"){
-				for(const server of Object.values(process.viteDevServers ?? {})){
-					server.ws.send({ type: "full-reload" })
+				if((process.viteDevServers) != null){
+					for(const server of Object.values(process.viteDevServers)){
+						server.ws.send({ type: "full-reload" })
+					}
 				}
 			}else{
 				process.stdin.emit("data", "rs")

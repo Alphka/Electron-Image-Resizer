@@ -3,9 +3,9 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses"
 import { MakerSquirrel } from "@electron-forge/maker-squirrel"
 import { FusesPlugin } from "@electron-forge/plugin-fuses"
 import { VitePlugin } from "@electron-forge/plugin-vite"
-import { MakerZIP } from "@electron-forge/maker-zip"
 import { MakerDeb } from "@electron-forge/maker-deb"
 import { MakerRpm } from "@electron-forge/maker-rpm"
+import { MakerZIP } from "@electron-forge/maker-zip"
 
 const config: ForgeConfig = {
 	packagerConfig: {
@@ -16,7 +16,7 @@ const config: ForgeConfig = {
 		// Keep node_modules so packager can copy the runtime dependencies (and sharp's
 		// platform package, an optionalDependency, when installed). The Vite plugin's
 		// default filter drops node_modules.
-		ignore: (file: string) => Boolean(file) && !/^\/(\.vite(\/|$)|node_modules(\/|$)|package\.json$)/.test(file)
+		ignore: (file: string) => Boolean(file) && !/^\/(?:\.vite(?:\/|$)|node_modules(?:\/|$)|package\.json$)/.test(file)
 	},
 	rebuildConfig: {},
 	makers: [

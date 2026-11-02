@@ -1,15 +1,15 @@
 import type { ConfigEnv, UserConfig } from "vite"
-import { getBuildConfig, external, pluginHotRestart } from "./vite.base.config"
+import { external, getBuildConfig, pluginHotRestart } from "./vite.base.config"
 import { defineConfig, mergeConfig } from "vite"
 
-export default defineConfig(env => {
+export default defineConfig((env) => {
 	const forgeEnv = env as ConfigEnv<"build">
 	const { forgeConfigSelf } = forgeEnv
 	const config: UserConfig = {
 		build: {
 			rollupOptions: {
 				external,
-				input: forgeConfigSelf.entry!,
+				input: forgeConfigSelf.entry,
 				output: {
 					format: "cjs",
 					inlineDynamicImports: true,

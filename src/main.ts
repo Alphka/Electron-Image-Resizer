@@ -1,12 +1,12 @@
 import type { IpcMainInvokeEvent } from "electron"
-import { app, BrowserWindow, ipcMain, Menu, shell } from "electron"
-import { mkdir, readFile, stat, writeFile } from "fs/promises"
-import { extname, isAbsolute, join, parse } from "path"
-import { existsSync } from "fs"
-import { tmpdir } from "os"
-import sharp from "sharp"
 import { IMAGE_EXTENSIONS, MAX_FILE_SIZE, OUTPUT_DIR_CHANNEL, RESIZE_CHANNEL } from "./shared"
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron"
+import { extname, isAbsolute, join, parse } from "node:path"
+import { mkdir, readFile, stat, writeFile } from "node:fs/promises"
+import { existsSync } from "node:fs"
+import { tmpdir } from "node:os"
 import isValidDimension from "./helpers/isValidDimension"
+import sharp from "sharp"
 
 const isMac = process.platform === "darwin"
 const outputFolder = join(tmpdir(), "image-resizer")
@@ -96,7 +96,7 @@ app.whenReady().then(() => {
 		return event.sender === mainWindow.webContents
 	}
 
-	ipcMain.handle(OUTPUT_DIR_CHANNEL, event => {
+	ipcMain.handle(OUTPUT_DIR_CHANNEL, (event) => {
 		if(!isTrustedSender(event)) throw new Error("Untrusted sender")
 		return outputFolder
 	})

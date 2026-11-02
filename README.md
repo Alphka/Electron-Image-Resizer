@@ -27,10 +27,10 @@ A small desktop app, built with Electron, for resizing a single image to a width
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) `>=22.18.0` (declared in `engines.node`; the minimum required by cspell, a development dependency) and npm. The repository ships a `package-lock.json`.
-  - The Electron Forge 8 packages alone need Node.js 22.13.0, and the spell check was run on 22.18.0. On Windows x64, `npm ci`, the type check (`npx tsc --noEmit`) and `npm run make` (Squirrel installer) completed with Node.js 22.13.0, 24.22.1 and 26.12.1. `npm run package` also completed with Node.js 26.3.0.
+- [Node.js](https://nodejs.org/) `>=22.18.0` and npm.
+  - The Electron Forge 8 packages alone need Node.js 22.13.0.
 - Git.
-- To build installers, the tooling required by each Electron Forge maker used here: Squirrel (Windows), ZIP (macOS), RPM and DEB (Linux). Only the Windows packaging path (Squirrel) was tested.
+- To build installers, the tooling required by each Electron Forge maker used here: Squirrel (Windows), ZIP (macOS), RPM and DEB (Linux).
 
 ## Installation
 
@@ -69,9 +69,10 @@ npm run make
 | `npm run make`    | Builds platform-specific distributables.                   |
 | `npm run publish` | Runs `electron-forge publish`.                             |
 
-There is no lint or test script. To type-check the project:
+There is no test script. To lint (ESLint and cspell) and type-check the project:
 
 ```sh
+npm run lint
 npx tsc --noEmit
 ```
 

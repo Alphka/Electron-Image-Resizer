@@ -4,7 +4,7 @@ declare module "*.svg" {
 }
 
 interface Window {
-	imageResizer: import("./shared").ImageResizerApi
+	imageResizer: import("./shared").IImageResizerApi
 }
 
 declare module "*.css" {}
