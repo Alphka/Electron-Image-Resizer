@@ -1,7 +1,6 @@
 import type { ConfigEnv, Plugin, UserConfig } from "vite"
-import type { AddressInfo } from "node:net"
 import { builtinModules } from "node:module"
-import packageData from "./package.json"
+import packageData from "./package.json" with { type: "json" }
 
 export const builtins = [
 	"electron",
@@ -45,20 +44,19 @@ export function getDefineKeys(names: string[]){
 
 export function getBuildDefine(env: ConfigEnv<"build">){
 	const { command, forgeConfig } = env
-	const names = forgeConfig.renderer.filter(({ name }) => name != null).map(({ name }) => name)
+
+	const names = forgeConfig.renderer.filter(({ name }) => name).map(({ name }) => name)
 	const defineKeys = getDefineKeys(names)
 
-	return Object.entries(defineKeys).reduce<Record<string, any>>(
-		(acc, [name, keys]) => {
-			const { VITE_DEV_SERVER_URL, VITE_NAME } = keys
-			const def = {
-				[VITE_DEV_SERVER_URL]: command === "serve" ? JSON.stringify(process.env[VITE_DEV_SERVER_URL]) : undefined,
-				[VITE_NAME]: JSON.stringify(name)
-			}
-			return { ...acc, ...def }
-		},
-		{}
-	)
+	return Object.entries(defineKeys).reduce<Record<string, any>>((accumulator, [name, keys]) => {
+		const { VITE_DEV_SERVER_URL, VITE_NAME } = keys
+
+		return {
+			...accumulator,
+			[VITE_DEV_SERVER_URL]: command === "serve" ? JSON.stringify(process.env[VITE_DEV_SERVER_URL]) : undefined,
+			[VITE_NAME]: JSON.stringify(name)
+		}
+	}, {})
 }
 
 export function pluginExposeRenderer(name: string): Plugin{
@@ -67,12 +65,16 @@ export function pluginExposeRenderer(name: string): Plugin{
 	return {
 		name: "@electron-forge/plugin-vite:expose-renderer",
 		configureServer(server){
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			process.viteDevServers ??= {}
 			process.viteDevServers[name] = server
 
 			server.httpServer?.once("listening", () => {
-				const addressInfo = server.httpServer!.address() as AddressInfo
-				process.env[VITE_DEV_SERVER_URL] = `http://localhost:${addressInfo?.port}`
+				const addressInfo = server.httpServer!.address()
+
+				if(addressInfo){
+					process.env[VITE_DEV_SERVER_URL] = typeof addressInfo === "string" ? addressInfo : `http://localhost:${addressInfo.port}`
+				}
 			})
 		}
 	}
@@ -83,7 +85,8 @@ export function pluginHotRestart(command: "reload" | "restart"): Plugin{
 		name: "@electron-forge/plugin-vite:hot-restart",
 		closeBundle(){
 			if(command === "reload"){
-				if((process.viteDevServers) != null){
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+				if(process.viteDevServers){
 					for(const server of Object.values(process.viteDevServers)){
 						server.ws.send({ type: "full-reload" })
 					}

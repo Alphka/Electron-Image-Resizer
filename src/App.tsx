@@ -3,7 +3,6 @@ import { ToastContainer } from "react-toastify"
 import AboutPage from "./pages/About"
 import Homepage from "./pages/Homepage"
 import "./main.css"
-import "react-toastify/dist/ReactToastify.min.css"
 
 export default function App(){
 	return (

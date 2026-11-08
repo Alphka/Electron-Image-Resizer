@@ -106,7 +106,10 @@ app.whenReady().then(() => {
 
 		const { path, width, height } = (data ?? {}) as Record<string, unknown>
 
-		if(!isValidDimension(width) || !isValidDimension(height)) throw new Error("Invalid image dimensions")
+		if(!isValidDimension(width) || !isValidDimension(height)){
+			throw new Error("Invalid image dimensions")
+		}
+
 		await validateInputPath(path)
 
 		try{
@@ -117,11 +120,17 @@ app.whenReady().then(() => {
 				.resize(width, height, { fit: "inside" })
 				.toBuffer()
 
-			if(!existsSync(outputFolder)) await mkdir(outputFolder, { recursive: true })
+			if(!existsSync(outputFolder)){
+				await mkdir(outputFolder, { recursive: true })
+			}
 
 			const { name, ext } = parse(inputPath)
+
 			let outputPath = join(outputFolder, name + ext)
-			for(let i = 1; existsSync(outputPath); i++) outputPath = join(outputFolder, `${name} (${i})${ext}`)
+
+			for(let i = 1; existsSync(outputPath); i++){
+				outputPath = join(outputFolder, `${name} (${i})${ext}`)
+			}
 
 			await writeFile(outputPath, resizedFilebuffer)
 			await shell.openPath(outputPath)

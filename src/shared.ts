@@ -16,5 +16,5 @@ export interface IImageResizeEventData {
 export interface IImageResizerApi {
 	resize: (data: IImageResizeEventData) => Promise<void>
 	getFilePath: (file: File) => string
-	getOutputDir: () => Promise<string>
+	getOutputPath: () => Promise<string>
 }

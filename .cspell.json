@@ -21,6 +21,7 @@
 		"textnodes",
 		"Toastify",
 		"vite",
+		"winstaller",
 		"yoda"
 	],
 	"ignorePaths": [

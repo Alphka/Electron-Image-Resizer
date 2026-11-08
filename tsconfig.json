@@ -8,6 +8,7 @@
 		"moduleResolution": "bundler",
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
+		"allowImportingTsExtensions": true,
 		"skipLibCheck": true,
 		"lib": [
 			"DOM",
@@ -15,6 +16,7 @@
 			"ESNext"
 		],
 		"sourceMap": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"noEmit": true
 	}
 }

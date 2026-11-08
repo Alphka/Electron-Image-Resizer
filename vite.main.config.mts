@@ -1,10 +1,11 @@
 import type { ConfigEnv, UserConfig } from "vite"
-import { external, getBuildConfig, getBuildDefine, pluginHotRestart } from "./vite.base.config"
+import { external, getBuildConfig, getBuildDefine, pluginHotRestart } from "./vite.base.config.mts"
 import { defineConfig, mergeConfig } from "vite"
 
 export default defineConfig((env) => {
 	const forgeEnv = env as ConfigEnv<"build">
 	const { forgeConfigSelf } = forgeEnv
+
 	const define = getBuildDefine(forgeEnv)
 
 	const config: UserConfig = {
@@ -14,7 +15,7 @@ export default defineConfig((env) => {
 				fileName: () => "[name].js",
 				formats: ["cjs"]
 			},
-			rollupOptions: {
+			rolldownOptions: {
 				external
 			}
 		},

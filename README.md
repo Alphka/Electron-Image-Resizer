@@ -18,19 +18,20 @@ A small desktop app, built with Electron, for resizing a single image to a width
 
 ## Tech stack
 
-- [Electron](https://www.electronjs.org/) 31 with [Electron Forge](https://www.electronforge.io/) 8 and its Vite plugin
-- [Vite](https://vitejs.dev/) 5
-- [React](https://react.dev/) 18, [React Router](https://reactrouter.com/) 6 (hash router) and [React Toastify](https://fkhadra.github.io/react-toastify/)
-- [Tailwind CSS](https://tailwindcss.com/) 3 and [tailwind-merge](https://github.com/dcastil/tailwind-merge)
+- [Electron](https://www.electronjs.org/) 45
+- [Electron Forge](https://www.electronforge.io/) 8 and its Vite plugin
+- [Vite](https://vitejs.dev/) 8 (Rolldown)
+- [React](https://react.dev/) 19
+- [React Router](https://reactrouter.com/) 7
+- [React Toastify](https://fkhadra.github.io/react-toastify/) 11
+- [Tailwind CSS](https://tailwindcss.com/) 4 (via `@tailwindcss/postcss`)
+- [tailwind-merge](https://github.com/dcastil/tailwind-merge) 3
 - [sharp](https://sharp.pixelplumbing.com/) for image processing
-- [TypeScript](https://www.typescriptlang.org/) 5
+- [TypeScript](https://www.typescriptlang.org/) 6
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) `>=22.18.0` and npm.
-  - The Electron Forge 8 packages alone need Node.js 22.13.0.
-- Git.
-- To build installers, the tooling required by each Electron Forge maker used here: Squirrel (Windows), ZIP (macOS), RPM and DEB (Linux).
+- [Node.js](https://nodejs.org/) `>=22.18.0`
 
 ## Installation
 
@@ -62,18 +63,21 @@ npm run make
 
 ## Scripts
 
-| Script            | Description                                                |
-| ----------------- | ---------------------------------------------------------- |
-| `npm start`       | Runs the app in development mode (`electron-forge start`). |
-| `npm run package` | Packages the app without creating installers.              |
-| `npm run make`    | Builds platform-specific distributables.                   |
-| `npm run publish` | Runs `electron-forge publish`.                             |
+| Script              | Description                                                |
+| ------------------- | ---------------------------------------------------------- |
+| `npm start`         | Runs the app in development mode (`electron-forge start`). |
+| `npm run package`   | Packages the app without creating installers.              |
+| `npm run make`      | Builds platform-specific distributables.                   |
+| `npm run publish`   | Runs `electron-forge publish`.                             |
+| `npm run lint`      | Runs ESLint and cspell.                                    |
+| `npm run lint:fix`  | Runs ESLint and applies automatic fixes.                   |
+| `npm run typecheck` | Type-checks the project with `tsc`.                        |
 
 There is no test script. To lint (ESLint and cspell) and type-check the project:
 
 ```sh
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 ```
 
 ## Security
@@ -87,10 +91,13 @@ src/
   main.ts            Electron main process: window, menu and the validated IPC handlers
   preload.ts         Exposes a minimal `window.imageResizer` API through contextBridge
   shared.ts          Constants, types and validation shared by main, preload and renderer
+  helpers/           Small helpers shared by the renderer and the main process
   index.tsx, App.tsx Renderer entry point and routes (/home, /about)
+  main.css           Tailwind CSS entry point (`@import "tailwindcss"`)
   pages/             Homepage (resize form) and About
 forge.config.ts      Electron Forge config (makers, Vite plugin, fuses)
-vite.*.config.ts     Vite configs for main, preload and renderer
+vite.*.config.mts    Vite configs for main, preload and renderer
+postcss.config.mts   PostCSS config that enables Tailwind CSS
 ```
 
 ## License

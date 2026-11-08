@@ -1,21 +1,20 @@
 import type { ConfigEnv } from "vite"
-import { pluginExposeRenderer } from "./vite.base.config"
+import { pluginExposeRenderer } from "./vite.base.config.mts"
 import { defineConfig } from "vite"
 
 export default defineConfig((env) => {
 	const forgeEnv = env as ConfigEnv<"renderer">
 	const { root, mode, forgeConfigSelf } = forgeEnv
-	const name = forgeConfigSelf.name ?? ""
 
 	return {
 		root,
 		mode,
 		base: "./",
 		build: {
-			outDir: `.vite/renderer/${name}`
+			outDir: `.vite/renderer/${forgeConfigSelf.name}`
 		},
 		plugins: [
-			pluginExposeRenderer(name)
+			pluginExposeRenderer(forgeConfigSelf.name)
 		],
 		resolve: {
 			preserveSymlinks: true

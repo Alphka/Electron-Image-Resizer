@@ -1,6 +1,6 @@
 import { fixupPluginRules } from "@eslint/compat"
 import { defineConfig } from "eslint/config"
-import { tailwind3 } from "tailwind-csstree"
+import { tailwind4 } from "tailwind-csstree"
 import orderingConventions from "eslint-plugin-ordering-conventions"
 import tailwindPlugin from "eslint-plugin-better-tailwindcss"
 import unusedImports from "eslint-plugin-unused-imports"
@@ -95,7 +95,7 @@ export default defineConfig([
 				version: "detect"
 			},
 			"better-tailwindcss": {
-				tailwindConfig: "tailwind.config.ts",
+				entryPoint: "src/main.css",
 				detectComponentClasses: true
 			}
 		},
@@ -579,6 +579,7 @@ export default defineConfig([
 			"@typescript-eslint/no-floating-promises": "off",
 			"@typescript-eslint/no-import-type-side-effects": "error",
 			"@typescript-eslint/no-non-null-assertion": "off",
+			"@typescript-eslint/no-misused-promises": "off",
 			"@typescript-eslint/no-redeclare": "error",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
@@ -724,7 +725,7 @@ export default defineConfig([
 		language: "css/css",
 		languageOptions: {
 			tolerant: true,
-			customSyntax: tailwind3
+			customSyntax: tailwind4
 		},
 		rules: {
 			"css/no-empty-blocks": "error",
